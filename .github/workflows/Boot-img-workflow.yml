@@ -1,0 +1,61 @@
+name: Unpack and Repack Boot Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+env:
+  BOOT_IMG_PATH: "./boot.img"
+  OUTPUT_DIR: "./output"
+  REPACKED_IMG: "repacked-boot.img"
+
+jobs:
+  unpack_repack:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Load Configurations
+      env:
+        CONFIG_FILE: config.env
+      run: |
+        if [ -f $CONFIG_FILE ]; then
+          echo "Loading configurations from $CONFIG_FILE"
+          set -a
+          source $CONFIG_FILE
+          set +a
+        else
+          echo "config.env file not found!"
+          exit 1
+        fi
+
+    - name: Install Required Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y abootimg
+
+    - name: Unpack boot.img
+      run: |
+        mkdir -p $OUTPUT_DIR
+        abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR
+
+    - name: Modify Boot Image (Optional)
+      run: |
+        echo "Make modifications to the unpacked image if needed"
+        # Add your custom logic here for modifying the unpacked files
+        # Example: editing the initramfs, kernel, etc.
+
+    - name: Repack boot.img
+      run: |
+        abootimg --create $REPACKED_IMG -f $OUTPUT_DIR/bootimg.cfg -k $OUTPUT_DIR/zImage -r $OUTPUT_DIR/initrd.img
+
+    - name: Upload Repacked Boot Image
+      uses: actions/upload-artifact@v3
+      with:
+        name: repacked-boot-img
+        path: $REPACKED_IMG
