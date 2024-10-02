@@ -20,16 +20,11 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    # Optionally, download boot.img from an external source
-    - name: Download boot.img
+    # Download boot.img from SourceForge
+    - name: Download boot.img from SourceForge
       run: |
-        # Uncomment and modify the following line if boot.img needs to be downloaded
-        # wget <URL_TO_BOOT_IMG> -O $BOOT_IMG_PATH
-        echo "Checking if boot.img exists..."
-        if [ ! -f "$BOOT_IMG_PATH" ]; then
-          echo "Error: boot.img file not found at $BOOT_IMG_PATH"
-          exit 1
-        fi
+        wget https://sourceforge.net/projects/payload/files/Boot/boot.img/download -O $BOOT_IMG_PATH
+        echo "Downloaded boot.img from SourceForge"
 
     - name: Load Configurations
       env:
