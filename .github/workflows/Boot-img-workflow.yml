@@ -50,6 +50,11 @@ jobs:
         mkdir -p $OUTPUT_DIR
         abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR/bootimg.cfg
 
+    - name: Check bootimg.cfg Content
+      run: |
+        echo "Contents of bootimg.cfg:"
+        cat $OUTPUT_DIR/bootimg.cfg
+
     - name: Modify Boot Image (Optional)
       run: |
         echo "Make modifications to the unpacked image if needed"
