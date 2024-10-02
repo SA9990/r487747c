@@ -48,7 +48,7 @@ jobs:
     - name: Unpack boot.img
       run: |
         mkdir -p $OUTPUT_DIR
-        abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR
+        abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR/bootimg.cfg
 
     - name: Modify Boot Image (Optional)
       run: |
