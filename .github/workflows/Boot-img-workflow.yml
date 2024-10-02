@@ -55,14 +55,18 @@ jobs:
         echo "Contents of bootimg.cfg:"
         cat $OUTPUT_DIR/bootimg.cfg
 
-    - name: Modify Boot Image (Optional)
+    - name: Create a Valid bootimg.cfg
       run: |
-        echo "Make modifications to the unpacked image if needed"
-        # Add your custom logic here for modifying the unpacked files
+        echo "Creating a valid bootimg.cfg file..."
+        echo "kernel=./$KERNEL" > $OUTPUT_DIR/bootimg.cfg
+        echo "ramdisk=./$RAMDISK" >> $OUTPUT_DIR/bootimg.cfg
+        echo "cmdline=$CMDLINE" >> $OUTPUT_DIR/bootimg.cfg
+        echo "pagesize=$PAGESIZE" >> $OUTPUT_DIR/bootimg.cfg
+        echo "name=$BOOT_IMAGE_NAME" >> $OUTPUT_DIR/bootimg.cfg
 
     - name: Repack boot.img
       run: |
-        abootimg --create $REPACKED_IMG -f $OUTPUT_DIR/bootimg.cfg -k $OUTPUT_DIR/zImage -r $OUTPUT_DIR/initrd.img
+        abootimg --create $REPACKED_IMG -f $OUTPUT_DIR/bootimg.cfg -k $OUTPUT_DIR/$KERNEL -r $OUTPUT_DIR/$RAMDISK
 
     - name: Upload Repacked Boot Image
       uses: actions/upload-artifact@v3
