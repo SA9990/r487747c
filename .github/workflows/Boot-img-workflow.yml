@@ -11,6 +11,11 @@ env:
   BOOT_IMG_PATH: "./boot.img"
   OUTPUT_DIR: "./output"
   REPACKED_IMG: "repacked-boot.img"
+  KERNEL: "Image"                # Adjust if necessary
+  RAMDISK: "initrd.img"          # Adjust if necessary
+  CMDLINE: "androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 androidboot.usbcontroller=a800000.dwc3 cgroup.memory=nokmem,nosocket console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000 loop.max_part=7 lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 reboot=panic_warm service_locator.enable=1 swiotlb=2048"
+  PAGESIZE: "4096"
+  BOOT_IMAGE_NAME: "MyBootImage"  # Optional: Use a meaningful name
 
 jobs:
   unpack_repack:
@@ -26,20 +31,6 @@ jobs:
         wget https://sourceforge.net/projects/payload/files/Boot/boot.img/download -O $BOOT_IMG_PATH
         echo "Downloaded boot.img from SourceForge"
 
-    - name: Load Configurations
-      env:
-        CONFIG_FILE: config.env
-      run: |
-        if [ -f $CONFIG_FILE ]; then
-          echo "Loading configurations from $CONFIG_FILE"
-          set -a
-          source $CONFIG_FILE
-          set +a
-        else
-          echo "config.env file not found!"
-          exit 1
-        fi
-
     - name: Install Required Tools
       run: |
         sudo apt-get update
@@ -50,11 +41,6 @@ jobs:
         mkdir -p $OUTPUT_DIR
         abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR/bootimg.cfg
 
-    - name: Check bootimg.cfg Content
-      run: |
-        echo "Contents of bootimg.cfg:"
-        cat $OUTPUT_DIR/bootimg.cfg
-
     - name: Create a Valid bootimg.cfg
       run: |
         echo "Creating a valid bootimg.cfg file..."
@@ -64,12 +50,29 @@ jobs:
         echo "pagesize=$PAGESIZE" >> $OUTPUT_DIR/bootimg.cfg
         echo "name=$BOOT_IMAGE_NAME" >> $OUTPUT_DIR/bootimg.cfg
 
+    - name: Check if Kernel and Ramdisk Exist
+      run: |
+        echo "Checking for kernel and ramdisk files..."
+        if [ ! -f "$OUTPUT_DIR/$KERNEL" ]; then
+          echo "Kernel file not found: $OUTPUT_DIR/$KERNEL"
+          exit 1
+        fi
+        if [ ! -f "$OUTPUT_DIR/$RAMDISK" ]; then
+          echo "Ramdisk file not found: $OUTPUT_DIR/$RAMDISK"
+          exit 1
+        fi
+
     - name: Repack boot.img
       run: |
         abootimg --create $REPACKED_IMG -f $OUTPUT_DIR/bootimg.cfg -k $OUTPUT_DIR/$KERNEL -r $OUTPUT_DIR/$RAMDISK
 
-    - name: Upload Repacked Boot Image
+    - name: List Output Directory Contents
+      run: |
+        echo "Contents of $OUTPUT_DIR:"
+        ls -la $OUTPUT_DIR
+
+    - name: Upload Output as Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: repacked-boot-img
-        path: $REPACKED_IMG
+        name: boot-output
+        path: $OUTPUT_DIR/**   # Upload all files in the OUTPUT_DIR
