@@ -36,10 +36,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y abootimg
 
-    - name: Unpack boot.img
+    - name: Create Output Directory
       run: |
         mkdir -p $OUTPUT_DIR
+        echo "Output directory created at $OUTPUT_DIR"
+
+    - name: Unpack boot.img
+      run: |
         abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR/bootimg.cfg
+        echo "Unpacked boot.img and generated bootimg.cfg in $OUTPUT_DIR"
 
     - name: Create a Valid bootimg.cfg
       run: |
@@ -65,6 +70,7 @@ jobs:
     - name: Repack boot.img
       run: |
         abootimg --create $REPACKED_IMG -f $OUTPUT_DIR/bootimg.cfg -k $OUTPUT_DIR/$KERNEL -r $OUTPUT_DIR/$RAMDISK
+        echo "Repacked boot.img into $REPACKED_IMG"
 
     - name: List Output Directory Contents
       run: |
