@@ -12,8 +12,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      KERNEL_REPO: https://github.com/BlissRoms-Devices/android_kernel_asus_sm8250
-      CLANG_REPO: https://github.com/SA9990/proton-clang
+      KERNEL_REPO: BlissRoms-Devices/android_kernel_asus_sm8250
+      CLANG_REPO: SA9990/proton-clang
       KERNEL_DIR: android_kernel_asus_sm8250
       CLANG_DIR: proton-clang
       DEFCONFIG: vendor/obiwan_defconfig
@@ -27,12 +27,14 @@ jobs:
         with:
           repository: ${{ env.KERNEL_REPO }}
           path: ${{ env.KERNEL_DIR }}
+          fetch-depth: 1
 
       - name: Checkout Proton Clang
         uses: actions/checkout@v2
         with:
           repository: ${{ env.CLANG_REPO }}
           path: ${{ env.CLANG_DIR }}
+          fetch-depth: 1
 
       - name: Set up Environment
         run: |
