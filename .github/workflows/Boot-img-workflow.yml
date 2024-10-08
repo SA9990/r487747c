@@ -22,7 +22,7 @@ jobs:
       run: sudo apt-get install -y abootimg curl
 
     - name: Download boot.img
-      run: curl -L -o boot.img <URL_TO_BOOT_IMG>  # Replace with actual boot.img URL
+      run: curl -L -o boot.img https://sourceforge.net/projects/payload/files/Boot/boot.img  # Replace with actual boot.img URL
 
     - name: Extract DTB
       run: |
