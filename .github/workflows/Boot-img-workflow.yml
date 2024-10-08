@@ -22,7 +22,7 @@ jobs:
       run: sudo apt-get install -y abootimg curl
 
     - name: Download boot.img
-      run: curl -L -o boot.img https://sourceforge.net/projects/payload/files/Boot/boot.img  # Replace with actual boot.img URL
+      run: curl -L -o boot.img  https://sourceforge.net/projects/payload/files/Boot/boot.img # Replace with actual boot.img URL
 
     - name: Extract DTB
       run: |
@@ -31,7 +31,7 @@ jobs:
         mv extracted/*.dtb extracted_dtb.dtb
 
     - name: Upload extracted DTB
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3  # Use version 3
       with:
-        name: extracted_dtb
+        name: extracted-dtb-${{ github.run_id }}  # Unique name with run ID
         path: extracted_dtb.dtb
