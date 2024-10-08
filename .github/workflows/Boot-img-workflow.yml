@@ -1,84 +1,51 @@
-name: Unpack and Repack Boot Image
+name: Modify boot.img
 
 on:
   push:
     branches:
       - main
   pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
-env:
-  BOOT_IMG_PATH: "./boot.img"
-  OUTPUT_DIR: "./output"
-  REPACKED_IMG: "repacked-boot.img"
-  KERNEL: "Image"                # Adjust if necessary
-  RAMDISK: "initrd.img"          # Adjust if necessary
-  CMDLINE: "androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 androidboot.usbcontroller=a800000.dwc3 cgroup.memory=nokmem,nosocket console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000 loop.max_part=7 lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 reboot=panic_warm service_locator.enable=1 swiotlb=2048"
-  PAGESIZE: "4096"
-  BOOT_IMAGE_NAME: "MyBootImage"  # Optional: Use a meaningful name
-
 jobs:
-  unpack_repack:
+  modify-boot-image:
+
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v2
 
-    # Download boot.img from SourceForge
-    - name: Download boot.img from SourceForge
-      run: |
-        wget https://sourceforge.net/projects/payload/files/Boot/boot.img/download -O $BOOT_IMG_PATH
-        echo "Downloaded boot.img from SourceForge"
-
-    - name: Install Required Tools
+    - name: Set up environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y abootimg
+        sudo apt-get install -y abootimg curl
 
-    - name: Create Output Directory
+    - name: Download boot.img
       run: |
-        mkdir -p $OUTPUT_DIR
-        echo "Output directory created at $OUTPUT_DIR"
+        curl -L -o boot.img <URL_TO_BOOT_IMG>  # Replace with actual boot.img URL
 
-    - name: Unpack boot.img
+    - name: Download kernel
       run: |
-        abootimg -x $BOOT_IMG_PATH -o $OUTPUT_DIR/bootimg.cfg
-        echo "Unpacked boot.img and generated bootimg.cfg in $OUTPUT_DIR"
+        curl -L -o new_kernel.img <URL_TO_NEW_KERNEL>  # Replace with actual kernel URL
 
-    - name: Create a Valid bootimg.cfg
+    - name: Extract boot.img
       run: |
-        echo "Creating a valid bootimg.cfg file..."
-        echo "kernel=./$KERNEL" > $OUTPUT_DIR/bootimg.cfg
-        echo "ramdisk=./$RAMDISK" >> $OUTPUT_DIR/bootimg.cfg
-        echo "cmdline=$CMDLINE" >> $OUTPUT_DIR/bootimg.cfg
-        echo "pagesize=$PAGESIZE" >> $OUTPUT_DIR/bootimg.cfg
-        echo "name=$BOOT_IMAGE_NAME" >> $OUTPUT_DIR/bootimg.cfg
+        mkdir bootimg
+        abootimg --extract boot.img -o bootimg/
 
-    - name: Check if Kernel and Ramdisk Exist
+    - name: Replace kernel
       run: |
-        echo "Checking for kernel and ramdisk files..."
-        if [ ! -f "$OUTPUT_DIR/$KERNEL" ]; then
-          echo "Kernel file not found: $OUTPUT_DIR/$KERNEL"
-          exit 1
-        fi
-        if [ ! -f "$OUTPUT_DIR/$RAMDISK" ]; then
-          echo "Ramdisk file not found: $OUTPUT_DIR/$RAMDISK"
-          exit 1
-        fi
+        cp new_kernel.img bootimg/zImage  # Adjust if the name of the kernel is different
 
     - name: Repack boot.img
       run: |
-        abootimg --create $REPACKED_IMG -f $OUTPUT_DIR/bootimg.cfg -k $OUTPUT_DIR/$KERNEL -r $OUTPUT_DIR/$RAMDISK
-        echo "Repacked boot.img into $REPACKED_IMG"
+        abootimg --create new_boot.img -f bootimg/bootimg.cfg -k bootimg/zImage -r bootimg/rambase
 
-    - name: List Output Directory Contents
-      run: |
-        echo "Contents of $OUTPUT_DIR:"
-        ls -la $OUTPUT_DIR
-
-    - name: Upload Output as Artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload new boot.img
+      uses: actions/upload-artifact@v2
       with:
-        name: boot-output
-        path: $OUTPUT_DIR/**   # Upload all files in the OUTPUT_DIR
+        name: new_boot.img
+        path: new_boot.img
