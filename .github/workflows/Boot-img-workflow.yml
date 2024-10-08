@@ -1,4 +1,4 @@
-name: Extract DTB from boot.img
+name: Extract Kernel from boot.img
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  extract-dtb:
+  extract-kernel:
 
     runs-on: ubuntu-latest
 
@@ -22,16 +22,24 @@ jobs:
       run: sudo apt-get install -y abootimg curl
 
     - name: Download boot.img
-      run: curl -L -o boot.img  https://sourceforge.net/projects/payload/files/Boot/boot.img # Replace with actual boot.img URL
-
-    - name: Extract DTB
       run: |
-        mkdir extracted
-        abootimg --extract boot.img -o extracted/
-        mv extracted/*.dtb extracted_dtb.dtb
+        curl -L -o boot.img https://sourceforge.net/projects/payload/files/Boot/boot.img  # Ensure URL is correct
 
-    - name: Upload extracted DTB
-      uses: actions/upload-artifact@v3  # Use version 3
+    - name: Extract Kernel
+      run: |
+        mkdir -p extracted
+        abootimg --extract boot.img -o extracted/
+        echo "Extracted files:"
+        ls extracted/
+        if [ -f extracted/zImage ]; then  # Change if kernel filename is different
+          mv extracted/zImage extracted_kernel.img
+        else
+          echo "No kernel file found!"
+          exit 1
+        fi
+
+    - name: Upload extracted Kernel
+      uses: actions/upload-artifact@v3
       with:
-        name: extracted-dtb-${{ github.run_id }}  # Unique name with run ID
-        path: extracted_dtb.dtb
+        name: extracted-kernel-${{ github.run_id }}
+        path: extracted_kernel.img
