@@ -1,4 +1,4 @@
-name: Modify boot.img
+name: Extract DTB from boot.img
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  modify-boot-image:
+  extract-dtb:
 
     runs-on: ubuntu-latest
 
@@ -19,33 +19,19 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up environment
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y abootimg curl
+      run: sudo apt-get install -y abootimg curl
 
     - name: Download boot.img
-      run: |
-        curl -L -o boot.img <URL_TO_BOOT_IMG>  # Replace with actual boot.img URL
+      run: curl -L -o boot.img <URL_TO_BOOT_IMG>  # Replace with actual boot.img URL
 
-    - name: Download kernel
+    - name: Extract DTB
       run: |
-        curl -L -o new_kernel.img <URL_TO_NEW_KERNEL>  # Replace with actual kernel URL
+        mkdir extracted
+        abootimg --extract boot.img -o extracted/
+        mv extracted/*.dtb extracted_dtb.dtb
 
-    - name: Extract boot.img
-      run: |
-        mkdir bootimg
-        abootimg --extract boot.img -o bootimg/
-
-    - name: Replace kernel
-      run: |
-        cp new_kernel.img bootimg/zImage  # Adjust if the name of the kernel is different
-
-    - name: Repack boot.img
-      run: |
-        abootimg --create new_boot.img -f bootimg/bootimg.cfg -k bootimg/zImage -r bootimg/rambase
-
-    - name: Upload new boot.img
+    - name: Upload extracted DTB
       uses: actions/upload-artifact@v2
       with:
-        name: new_boot.img
-        path: new_boot.img
+        name: extracted_dtb
+        path: extracted_dtb.dtb
